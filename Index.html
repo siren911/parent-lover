@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#FFF6F2" />
+<title>사랑의 온도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5A4651;
+    --ink-soft:#A38E98;
+    --paper:#FFF6F2;
+    --card:#FFFFFF;
+    --line:#F3E4E0;
+    --rose:#FF6F91;
+    --rose-deep:#E85C7E;
+    --pink:#FF9DB0;
+    --honey:#FFC36B;
+    --cool:#9DBDE6;
+    --shadow:0 14px 34px rgba(214,128,138,.16);
+    --temp-color:#9DBDE6;
+    --ambient:#9DBDE6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Gowun Dodum',-apple-system,sans-serif;color:var(--ink);
+    background:var(--paper);min-height:100vh;overflow-x:hidden;transition:background 1s ease;
+  }
+  .ambient{position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background 1.1s ease;
+    background:
+      radial-gradient(130% 60% at 50% -8%, color-mix(in srgb,var(--ambient) 42%,transparent),transparent 62%),
+      radial-gradient(80% 50% at 10% 105%, color-mix(in srgb,var(--ambient) 26%,transparent),transparent 55%),
+      radial-gradient(80% 50% at 95% 100%, color-mix(in srgb,var(--pink) 18%,transparent),transparent 55%);}
+  .app{max-width:430px;margin:0 auto;padding:0 18px 120px;}
+
+  header.top{padding:24px 4px 6px;display:flex;align-items:center;justify-content:space-between;}
+  .wordmark{font-family:'Jua';font-size:24px;display:flex;align-items:center;gap:8px;}
+  .wordmark .heart{font-size:20px;animation:beat 1.6s ease-in-out infinite;}
+  @keyframes beat{0%,100%{transform:scale(1);}15%{transform:scale(1.25);}30%{transform:scale(1);}}
+  .subtitle{font-size:12px;color:var(--ink-soft);background:#fff;padding:6px 12px;border-radius:999px;box-shadow:var(--shadow);}
+
+  .view{display:none;animation:fade .45s cubic-bezier(.22,1,.36,1);}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+  /* ===== character stage ===== */
+  .stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:18px 0 4px;}
+  .hearts-amb{position:absolute;top:0;left:0;right:0;height:200px;pointer-events:none;display:flex;justify-content:center;gap:30px;opacity:0;transition:opacity 1s;}
+  .hearts-amb span{font-size:18px;animation:floatUp 3.4s ease-in-out infinite;}
+  .hearts-amb span:nth-child(2){animation-delay:1.1s;font-size:13px;}
+  .hearts-amb span:nth-child(3){animation-delay:2.2s;font-size:15px;}
+  @keyframes floatUp{0%{transform:translateY(40px) scale(.6);opacity:0;}30%{opacity:.9;}100%{transform:translateY(-30px) scale(1);opacity:0;}}
+
+  .character{position:relative;width:150px;height:248px;cursor:pointer;}
+  .thermo{position:absolute;left:50%;top:0;transform:translateX(-50%);width:150px;height:248px;}
+  .tube{position:absolute;left:50%;top:0;transform:translateX(-50%);width:50px;height:160px;border-radius:28px 28px 0 0;
+    background:#fff;box-shadow:var(--shadow),inset 0 0 0 1px var(--line);overflow:hidden;}
+  .tube .fill{position:absolute;left:0;right:0;bottom:0;height:0%;
+    background:linear-gradient(180deg,var(--temp-color),color-mix(in srgb,var(--temp-color) 50%,#fff));
+    transition:height 1.2s cubic-bezier(.34,1.4,.4,1),background 1s;}
+  .bulb{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:128px;height:128px;border-radius:50%;
+    background:radial-gradient(120% 120% at 35% 30%, color-mix(in srgb,var(--temp-color) 35%,#fff), var(--temp-color));
+    box-shadow:var(--shadow),inset -6px -8px 14px rgba(0,0,0,.06),inset 4px 4px 12px rgba(255,255,255,.5);
+    transition:background 1s;}
+  .bulb svg{position:absolute;inset:0;width:100%;height:100%;}
+  .bulb.shiver{animation:shiver 1.6s ease-in-out infinite;}
+  .bulb.bob{animation:bob 3s ease-in-out infinite;}
+  @keyframes shiver{0%,100%{transform:translateX(-50%) rotate(0);}25%{transform:translate(-53%) rotate(-3deg);}75%{transform:translate(-47%) rotate(3deg);}}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-6px);}}
+  @media (prefers-reduced-motion:reduce){.bulb.shiver,.bulb.bob{animation:none;}.wordmark .heart{animation:none;}}
+
+  .readout{text-align:center;margin-top:10px;}
+  .temp-num{font-family:'Jua';font-size:76px;line-height:.9;color:var(--temp-color);transition:color 1s;text-shadow:0 4px 0 rgba(0,0,0,.03);}
+  .temp-num small{font-size:30px;}
+  .badge{display:inline-block;font-family:'Jua';font-size:17px;color:#fff;background:var(--temp-color);padding:6px 18px;border-radius:999px;margin-top:6px;box-shadow:var(--shadow);transition:background 1s;}
+  .temp-sub{font-size:13px;color:var(--ink-soft);margin-top:12px;min-height:18px;}
+
+  .pills{display:flex;gap:10px;justify-content:center;margin:16px 0 2px;}
+  .pill{background:#fff;border-radius:18px;padding:10px 16px;font-size:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .pill b{font-family:'Jua';font-size:20px;color:var(--rose);}
+
+  /* puffy press-me button */
+  .cta{margin:22px auto 4px;display:block;width:100%;border:0;cursor:pointer;
+    background:linear-gradient(180deg,var(--pink),var(--rose));color:#fff;border-radius:26px;padding:19px;
+    font-family:'Jua';font-size:19px;letter-spacing:.5px;
+    box-shadow:0 9px 0 var(--rose-deep),0 18px 30px rgba(255,111,145,.4);
+    transition:transform .12s,box-shadow .12s;animation:invite 2.8s ease-in-out infinite;}
+  .cta:active{transform:translateY(7px);box-shadow:0 2px 0 var(--rose-deep),0 6px 14px rgba(255,111,145,.35);animation:none;}
+  @keyframes invite{0%,92%,100%{transform:translateY(0);}96%{transform:translateY(-4px);}}
+  @media (prefers-reduced-motion:reduce){.cta{animation:none;}}
+
+  .note{margin-top:16px;background:#fff;border-radius:24px;padding:16px 20px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start;}
+  .note .ic{font-size:26px;flex:0 0 auto;}
+  .note h3{margin:0 0 3px;font-family:'Jua';font-size:15px;font-weight:400;}
+  .note p{margin:0;font-size:13px;color:var(--ink-soft);line-height:1.6;}
+  .note.warn{background:linear-gradient(180deg,#F3F8FF,#fff);}
+
+  .recent{margin-top:20px;}
+  .section-title,.recent h4{font-family:'Jua';font-weight:400;font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+
+  .item{display:flex;align-items:center;gap:13px;background:#fff;border-radius:20px;padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow);transition:transform .12s;}
+  .item:active{transform:scale(.98);}
+  .item .emo{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:23px;background:linear-gradient(180deg,#FFF1EC,#FFE6E9);flex:0 0 auto;}
+  .item .body{flex:1;min-width:0;}
+  .item .body .t{font-size:14px;}
+  .item .body .m{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item .pts{font-family:'Jua';color:var(--rose);font-size:16px;}
+  .item .thumb{width:40px;height:40px;border-radius:12px;object-fit:cover;flex:0 0 auto;}
+  .item .del{background:none;border:0;color:#E6CFD4;font-size:17px;cursor:pointer;padding:4px;}
+  .day-head{font-size:12px;color:var(--ink-soft);margin:18px 4px 10px;font-family:'Jua';}
+  .empty{text-align:center;color:var(--ink-soft);font-size:13px;padding:44px 10px;line-height:1.8;}
+  .empty .big{font-size:40px;display:block;margin-bottom:10px;}
+
+  /* report */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px;}
+  .stat{background:#fff;border-radius:20px;padding:16px;box-shadow:var(--shadow);}
+  .stat .v{font-family:'Jua';font-size:28px;color:var(--ink);}
+  .stat .v small{font-size:14px;color:var(--ink-soft);}
+  .stat .k{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .chart-card{background:#fff;border-radius:24px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .chart-card h4{margin:0 0 12px;font-family:'Jua';font-weight:400;font-size:14px;}
+  svg.trend{width:100%;height:130px;display:block;}
+  .bars{display:flex;flex-direction:column;gap:10px;}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .bar-row .lab{width:98px;flex:0 0 auto;color:var(--ink-soft);font-size:12px;}
+  .bar-row .track{flex:1;height:16px;background:#F7ECEF;border-radius:10px;overflow:hidden;}
+  .bar-row .grow{height:100%;background:linear-gradient(90deg,var(--honey),var(--rose));border-radius:10px;transition:width .9s cubic-bezier(.34,1.4,.4,1);}
+  .bar-row .cnt{width:26px;text-align:right;font-family:'Jua';color:var(--rose);}
+
+  /* calendar + timeseries */
+  .cal-card{background:#fff;border-radius:24px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-title{font-family:'Jua';font-size:18px;}
+  .cal-nav{width:38px;height:38px;border:0;border-radius:13px;background:#FFF1EC;color:var(--rose);font-size:22px;cursor:pointer;transition:transform .12s;}
+  .cal-nav:active{transform:scale(.88);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-dow{margin-bottom:7px;}
+  .cal-dow span{text-align:center;font-size:11px;color:var(--ink-soft);}
+  .cal-dow span:first-child{color:#FF8FA3;}
+  .cell{height:48px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#F9EFEC;cursor:pointer;border:2px solid transparent;transition:transform .1s;color:var(--ink);}
+  .cell:active{transform:scale(.9);}
+  .cell.empty{background:transparent;cursor:default;}
+  .cell.today{border-color:var(--rose);}
+  .cell.sel{border-color:var(--ink);box-shadow:0 4px 12px rgba(90,70,81,.15);}
+  .cell .num{font-family:'Jua';font-size:13px;line-height:1;}
+  .cell .mk{font-size:9px;line-height:1;}
+  .cal-legend{display:flex;align-items:center;gap:4px;justify-content:center;margin-top:14px;font-size:10px;color:var(--ink-soft);}
+  .cal-legend i{width:18px;height:10px;border-radius:3px;display:inline-block;}
+  .ts-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .ts-head h4{font-family:'Jua';font-weight:400;font-size:14px;}
+  .seg{display:flex;background:#F7ECEF;border-radius:13px;padding:3px;}
+  .seg button{border:0;background:none;padding:7px 15px;border-radius:10px;font-family:'Gowun Dodum';font-size:12px;color:var(--ink-soft);cursor:pointer;transition:.15s;}
+  .seg button.on{background:#fff;color:var(--rose);box-shadow:var(--shadow);font-family:'Jua';}
+  .period-bars{display:flex;align-items:flex-end;gap:7px;min-height:162px;overflow-x:auto;}
+  .pb{flex:1 0 auto;min-width:26px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .pb .b{width:80%;max-width:30px;border-radius:9px 9px 4px 4px;min-height:4px;transition:height .8s cubic-bezier(.34,1.4,.4,1);}
+  .pb .val{font-family:'Jua';font-size:11px;color:var(--ink);}
+  .pb .lb{font-size:9px;color:var(--ink-soft);text-align:center;line-height:1.2;}
+
+  /* monthly archive */
+  .mo-row{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid var(--line);}
+  .mo-row:last-child{border-bottom:0;}
+  .mo-name{font-size:14px;}
+  .mo-stat{font-size:13px;color:var(--ink-soft);}
+  .mo-peak{font-family:'Jua';}
+  .mo-row .now{font-size:10px;color:var(--rose);font-family:'Jua';margin-left:6px;}
+
+  /* weekly report (pikmin-style) */
+  .week-card{background:#fff;border-radius:24px;padding:18px 16px 14px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .wk-title{font-family:'Jua';font-size:15px;text-align:center;color:var(--ink);margin-bottom:6px;}
+  .ring{position:relative;width:158px;height:158px;margin:2px auto 8px;}
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-emo{font-size:20px;line-height:1;}
+  .ring-num{font-family:'Jua';font-size:42px;line-height:1;color:var(--rose);}
+  .ring-lab{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .wk-chart{position:relative;height:132px;margin:14px 4px 0;}
+  .wk-goal{position:absolute;left:0;right:0;border-top:1.5px dashed #E7D6D0;height:0;}
+  .wk-goal span{position:absolute;right:0;top:-8px;background:#fff;padding:0 4px;font-size:9px;color:var(--ink-soft);}
+  #goal50{border-top:2px solid #10C29A;}
+  #goal50 span{color:#10C29A;font-family:'Jua';}
+  #goal36{border-top-color:#DEE3E1;}
+  #goal36 span{color:#9AA8A4;}
+  .wk-col.today{background:linear-gradient(180deg,#E9F7F2,rgba(233,247,242,0));border-radius:9px;}
+  .wk-bars{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:flex-end;gap:6px;z-index:1;}
+  .wk-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;}
+  .wk-col .crown{font-size:13px;line-height:1;margin-bottom:1px;}
+  .wk-col .bar{width:64%;max-width:22px;border-radius:7px 7px 3px 3px;min-height:3px;transition:height .8s cubic-bezier(.34,1.4,.4,1);}
+  .wk-col .lb{position:absolute;bottom:-26px;text-align:center;font-size:10px;color:var(--ink-soft);line-height:1.25;}
+  .wk-col.today .lb{color:var(--rose);font-family:'Jua';}
+  .wk-foot{text-align:center;font-size:13px;color:var(--ink-soft);margin-top:34px;}
+  .wk-foot b{font-family:'Jua';color:#10C29A;font-size:16px;}
+
+  /* celebration banner */
+  .cel-scrim{position:fixed;inset:0;background:rgba(90,70,81,.5);backdrop-filter:blur(2px);z-index:90;opacity:0;pointer-events:none;transition:.3s;}
+  .cel-scrim.open{opacity:1;pointer-events:auto;}
+  .cel{position:fixed;z-index:95;left:50%;top:50%;transform:translate(-50%,-46%) scale(.9);opacity:0;pointer-events:none;width:calc(100% - 64px);max-width:320px;background:#fff;border-radius:28px;padding:26px 24px;text-align:center;box-shadow:0 22px 54px rgba(90,70,81,.3);transition:.4s cubic-bezier(.22,1.4,.36,1);}
+  .cel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+  .cel-emoji{font-size:44px;line-height:1;}
+  .cel-temp{font-family:'Jua';font-size:46px;color:var(--rose);line-height:1;margin:6px 0 2px;}
+  .cel h3{font-family:'Jua';font-weight:400;font-size:22px;margin:6px 0 8px;}
+  .cel p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin:0 0 18px;}
+  .cel p b{color:var(--rose);}
+  .cel button{border:0;background:linear-gradient(180deg,var(--pink),var(--rose));color:#fff;font-family:'Jua';font-size:16px;padding:13px 30px;border-radius:16px;box-shadow:0 6px 0 var(--rose-deep);cursor:pointer;transition:.12s;}
+  .cel button:active{transform:translateY(4px);box-shadow:0 2px 0 var(--rose-deep);}
+
+  /* settings */
+  .set-card{background:#fff;border-radius:24px;padding:6px 18px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .set-row{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line);}
+  .set-row:last-child{border-bottom:0;}
+  .set-row .lab{font-size:14px;display:flex;align-items:center;gap:9px;}
+  .set-row input{width:66px;padding:9px;border:1.5px solid var(--line);border-radius:13px;text-align:center;font-family:'Jua';font-size:15px;color:var(--rose);background:#FFFafa;}
+  .set-row .unit{font-size:12px;color:var(--ink-soft);margin-left:4px;}
+  .btn-ghost{width:100%;padding:15px;border-radius:18px;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);font-family:'Jua';font-size:14px;cursor:pointer;margin-top:6px;transition:transform .12s;}
+  .btn-ghost:active{transform:scale(.98);}
+  .btn-save{border:0;color:#fff;background:linear-gradient(180deg,var(--pink),var(--rose));box-shadow:0 6px 0 var(--rose-deep);}
+  .btn-save:active{transform:translateY(5px);box-shadow:0 1px 0 var(--rose-deep);}
+  .btn-danger{color:var(--rose-deep);}
+  .switch{width:50px;height:29px;border-radius:999px;border:0;background:#E6DAD6;position:relative;cursor:pointer;transition:.2s;flex:0 0 auto;}
+  .switch::after{content:'';position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,.18);}
+  .switch.on{background:var(--rose);}
+  .switch.on::after{left:24px;}
+
+  /* nav */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:0 14px calc(12px + env(safe-area-inset-bottom));}
+  nav.tabs .inner{max-width:402px;margin:0 auto;background:#fff;border-radius:28px;display:flex;padding:8px;box-shadow:0 -2px 30px rgba(214,128,138,.18),var(--shadow);}
+  nav.tabs button{flex:1;background:none;border:0;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:#C9B3BA;font-size:11px;cursor:pointer;font-family:'Gowun Dodum';border-radius:20px;transition:.2s;}
+  nav.tabs button .ic{font-size:21px;filter:grayscale(.5);opacity:.6;transition:.2s;}
+  nav.tabs button.on{color:var(--rose);background:linear-gradient(180deg,#FFF1EC,#FFE6E9);}
+  nav.tabs button.on .ic{filter:none;opacity:1;transform:translateY(-2px) scale(1.1);}
+
+  /* sheet */
+  .scrim{position:fixed;inset:0;background:rgba(90,70,81,.42);backdrop-filter:blur(2px);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .scrim.open{opacity:1;pointer-events:auto;}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:430px;margin:0 auto;max-height:90vh;overflow-y:auto;background:var(--paper);border-radius:32px 32px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));transform:translateY(101%);transition:transform .4s cubic-bezier(.22,1.1,.36,1);box-shadow:0 -12px 44px rgba(90,70,81,.2);}
+  .sheet.open{transform:translateY(0);}
+  .sheet .grip{width:46px;height:5px;border-radius:3px;background:#EAD7D2;margin:8px auto 16px;}
+  .sheet h3{font-family:'Jua';font-weight:400;font-size:19px;margin:0 0 16px;text-align:center;}
+  .date-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:11px 15px;margin-bottom:12px;}
+  .date-lab{font-size:13px;color:var(--ink-soft);}
+  .date-row input[type=date]{border:0;background:none;font-family:'Gowun Dodum';font-size:14px;color:var(--ink);}
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .chip{display:flex;align-items:center;gap:10px;padding:14px;border:2px solid transparent;border-radius:18px;background:#fff;cursor:pointer;font-size:13px;box-shadow:0 4px 0 #F0E1DD;transition:.15s;}
+  .chip:active{transform:translateY(3px);box-shadow:0 1px 0 #F0E1DD;}
+  .chip .e{font-size:22px;}
+  .chip .p{margin-left:auto;font-family:'Jua';color:#D8C3C9;font-size:13px;}
+  .chip.sel{border-color:var(--rose);background:linear-gradient(180deg,#FFF1EC,#FFE6E9);box-shadow:0 4px 0 var(--pink);transform:translateY(-1px);}
+  .chip.sel .p{color:var(--rose);}
+  .sheet textarea{width:100%;border:1.5px solid var(--line);border-radius:16px;padding:13px;font-family:'Gowun Dodum';font-size:14px;resize:none;background:#fff;color:var(--ink);}
+  .sheet .photo-row{display:flex;align-items:center;gap:12px;margin:12px 0;}
+  .sheet .photo-row .photo-btn{position:relative;overflow:hidden;display:inline-block;font-size:13px;color:var(--ink-soft);border:1.5px dashed var(--line);border-radius:14px;padding:11px 16px;cursor:pointer;background:#fff;font-family:'Gowun Dodum';transition:transform .12s;}
+  .sheet .photo-row .photo-btn:active{transform:scale(.96);}
+  .sheet .photo-row .photo-btn input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0;}
+  .sheet .photo-row img{width:48px;height:48px;border-radius:12px;object-fit:cover;}
+  .sheet .save{width:100%;border:0;border-radius:20px;padding:17px;font-family:'Jua';font-size:18px;margin-top:8px;cursor:pointer;color:#fff;
+    background:linear-gradient(180deg,var(--pink),var(--rose));box-shadow:0 7px 0 var(--rose-deep);transition:.12s;}
+  .sheet .save:active{transform:translateY(6px);box-shadow:0 1px 0 var(--rose-deep);}
+  .sheet .save:disabled{opacity:.4;box-shadow:0 7px 0 #E8C3CC;}
+
+  .toast{position:fixed;left:50%;bottom:130px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:18px;font-family:'Jua';font-size:15px;z-index:80;opacity:0;transition:.4s cubic-bezier(.34,1.4,.4,1);pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .burst{position:fixed;left:0;top:0;pointer-events:none;z-index:75;font-size:26px;animation:burst 1.3s ease-out forwards;}
+  @keyframes burst{0%{transform:translateY(0) scale(.4);opacity:0;}20%{opacity:1;}100%{transform:translateY(-160px) scale(1.2) rotate(var(--r));opacity:0;}}
+</style>
+</head>
+<body>
+<div class="ambient" id="ambient"></div>
+<div class="app">
+  <header class="top">
+    <div class="wordmark"><span class="heart">💗</span>사랑의 온도</div>
+    <div class="subtitle">부모님과 나의 거리</div>
+  </header>
+
+  <!-- HOME -->
+  <section class="view active" id="v-home">
+    <div class="stage">
+      <div class="hearts-amb" id="ambHearts"><span>💛</span><span>💗</span><span>🧡</span></div>
+      <div class="character" onclick="poke()">
+        <div class="thermo">
+          <div class="tube"><div class="fill" id="fill"></div></div>
+          <div class="bulb" id="bulb"><svg id="face" viewBox="0 0 100 100"></svg></div>
+        </div>
+      </div>
+      <div class="readout">
+        <div class="temp-num" id="tempNum">0<small>°C</small></div>
+        <div class="badge" id="tempLabel">쌀쌀한 사이</div>
+        <div class="temp-sub" id="tempSub"></div>
+      </div>
+    </div>
+
+    <div class="pills">
+      <div class="pill">🔥 연속<b id="pillStreak">0</b>일</div>
+      <div class="pill">📅 이번 달<b id="pillMonth">0</b>회</div>
+    </div>
+
+    <button class="cta" onclick="openSheet()">＋ 오늘의 마음 기록하기</button>
+    <div id="homeNote"></div>
+
+    <div class="recent">
+      <h4>📌 최근 기록</h4>
+      <div id="recentList"></div>
+    </div>
+
+    <p style="font-family:'Jua';font-size:13px;color:var(--rose);text-align:center;margin-top:24px;">개발자 · 복부인과 클로드 💗</p>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="view" id="v-history">
+    <h3 class="section-title">📜 히스토리</h3>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="view" id="v-calendar">
+    <h3 class="section-title">📅 달력</h3>
+    <div class="cal-card">
+      <div class="cal-head">
+        <button class="cal-nav" onclick="calMove(-1)">‹</button>
+        <div class="cal-title" id="calTitle">–</div>
+        <button class="cal-nav" onclick="calMove(1)">›</button>
+      </div>
+      <div class="cal-grid cal-dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend"><span>낮음</span><i style="background:#9DBDE6"></i><i style="background:#8FC9C2"></i><i style="background:#FFC97A"></i><i style="background:#FFA56B"></i><i style="background:#FF5A7A"></i><span>높음</span></div>
+    </div>
+    <div id="calDetail"></div>
+
+    <div class="chart-card">
+      <div class="ts-head">
+        <h4 style="margin:0">사랑의 온도 시계열</h4>
+        <div class="seg" id="tsSeg">
+          <button class="on" onclick="setTs('week',this)">주간</button>
+          <button onclick="setTs('month',this)">월간</button>
+        </div>
+      </div>
+      <div class="period-bars" id="periodBars"></div>
+      <p style="font-size:11px;color:var(--ink-soft);text-align:center;margin:12px 0 0;">기간별 평균 온도 지수예요</p>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section class="view" id="v-report">
+    <h3 class="section-title">📊 리포트</h3>
+
+    <div class="week-card">
+      <div class="wk-title">이번 주 사랑 온도</div>
+      <div class="ring">
+        <svg viewBox="0 0 120 120">
+          <circle id="ringTrack" cx="60" cy="60" r="52" fill="none" stroke="#ECEFEE" stroke-width="11"/>
+          <circle id="ringProg" cx="60" cy="60" r="52" fill="none" stroke="#FF6F91" stroke-width="11" stroke-linecap="round" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-center"><div class="ring-emo">🌡️</div><div class="ring-num" id="ringNum">0°</div><div class="ring-lab" id="ringLab">–</div></div>
+      </div>
+      <div class="wk-chart">
+        <div class="wk-goal" id="goal50"><span>50° 축하</span></div>
+        <div class="wk-goal" id="goal36"><span>36° 따뜻</span></div>
+        <div class="wk-bars" id="wkBars"></div>
+      </div>
+      <div class="wk-foot">이번 주 <b id="wkCount">0</b>회 기록 · 평균 <b id="wkAvg">0°</b></div>
+    </div>
+
+    <div class="chart-card"><h4>📅 월별 기록</h4><div id="monthlyList"></div></div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="stWeek">0<small>회</small></div><div class="k">이번 주 기록</div></div>
+      <div class="stat"><div class="v" id="stMonth">0<small>회</small></div><div class="k">이번 달 기록</div></div>
+      <div class="stat"><div class="v" id="stStreak">0<small>일</small></div><div class="k">현재 연속 기록</div></div>
+      <div class="stat"><div class="v" id="stTop" style="font-size:17px;line-height:1.5;">–</div><div class="k">가장 많이 한 행동</div></div>
+    </div>
+    <div class="chart-card"><h4>최근 30일 온도 추이</h4>
+      <svg class="trend" id="trend" viewBox="0 0 320 130" preserveAspectRatio="none"></svg></div>
+    <div class="chart-card"><h4>행동별 기록 횟수</h4><div class="bars" id="bars"></div></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <h3 class="section-title">⚙️ 설정</h3>
+    <div class="set-card" id="weightSettings"></div>
+    <h4 class="section-title" style="font-size:14px;">온도 하락 규칙</h4>
+    <div class="set-card">
+      <div class="set-row"><div class="lab">⏳ 하락 유예 기간</div><div><input type="number" id="setGrace" min="0" max="30"><span class="unit">일</span></div></div>
+      <div class="set-row"><div class="lab">❄️ 하루 하락 폭</div><div><input type="number" id="setDecay" min="0" max="20"><span class="unit">°C</span></div></div>
+    </div>
+    <h4 class="section-title" style="font-size:14px;">기타</h4>
+    <div class="set-card">
+      <div class="set-row"><div class="lab">🗓️ 매월 1일 온도 리셋</div><button class="switch" id="swMonthly" onclick="toggleMonthly()"></button></div>
+    </div>
+    <button class="btn-ghost btn-save" onclick="saveSettings()">설정 저장</button>
+    <button class="btn-ghost btn-danger" onclick="resetAll()" style="margin-top:10px;">모든 기록 초기화</button>
+    <p style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:18px;line-height:1.7;">기록은 이 기기에만 저장돼요 💾<br>다른 기기와 동기화되지 않아요.</p>
+    <p style="font-family:'Jua';font-size:13px;color:var(--rose);text-align:center;margin-top:16px;">개발자 · 복부인과 클로드 💗</p>
+  </section>
+</div>
+
+<nav class="tabs"><div class="inner">
+  <button class="on" onclick="go('home',this)"><span class="ic">🌡️</span>홈</button>
+  <button onclick="go('history',this)"><span class="ic">📜</span>히스토리</button>
+  <button onclick="go('calendar',this)"><span class="ic">📅</span>달력</button>
+  <button onclick="go('report',this)"><span class="ic">📊</span>리포트</button>
+  <button onclick="go('settings',this)"><span class="ic">⚙️</span>설정</button>
+</div></nav>
+
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="grip"></div>
+  <h3>부모님께 무엇을 했나요? 💕</h3>
+  <div class="chips" id="chips"></div>
+  <div class="date-row"><span class="date-lab">📅 날짜</span><input type="date" id="recDate"></div>
+  <textarea id="memo" rows="2" placeholder="메모 (선택) — 어떤 마음이었는지 적어보세요"></textarea>
+  <div class="photo-row">
+    <label class="photo-btn">📷 갤러리에서 사진 첨부
+      <input type="file" id="photo" accept="image/*" onchange="onPhoto(event)">
+    </label>
+    <img id="photoPreview" style="display:none">
+  </div>
+  <button class="save" id="saveBtn" disabled onclick="saveAction()">기록하고 온도 올리기 🔆</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="cel-scrim" id="celScrim" onclick="closeCel()"></div>
+<div class="cel" id="celCard">
+  <div class="cel-emoji">🎉</div>
+  <div class="cel-temp" id="celTemp">50°C</div>
+  <h3>축하해요!</h3>
+  <p>부모님과의 온도가 <b id="celTemp2">50°C</b>를 넘었어요!<br>꾸준한 마음이 만든 따뜻한 결과예요 💗</p>
+  <button onclick="closeCel()">고마워요 ☺️</button>
+</div>
+
+<script>
+const KEY='love-temp-data-v1';
+const TYPES={
+  visit:{emo:'🏠',label:'부모님 방문'},
+  meal:{emo:'🍚',label:'함께 식사'},
+  money:{emo:'💸',label:'용돈·송금'},
+  gift:{emo:'🎁',label:'선물'},
+  call:{emo:'📞',label:'전화·영상통화'},
+  message:{emo:'💬',label:'안부 메시지'},
+  praise:{emo:'👏',label:'칭찬 표현하기'},
+  worry:{emo:'🤝',label:'걱정거리 해결'},
+};
+const DEFAULTS={actions:[],settings:{weights:{visit:12,meal:9,money:7,gift:7,call:5,message:3,praise:10,worry:15},graceDays:3,decayPerDay:1,monthlyReset:true,v:4},meta:{cel50:false}};
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.settings){if(d.settings.v!==4){const dw={visit:12,meal:9,money:7,gift:7,call:5,message:3,praise:10,worry:15};d.settings.weights=d.settings.weights||{};for(const k in dw)if(d.settings.weights[k]===undefined)d.settings.weights[k]=dw[k];if(d.settings.monthlyReset===undefined)d.settings.monthlyReset=true;d.settings.v=4;}d.meta=d.meta||{cel50:false};return d;}}catch(e){}return JSON.parse(JSON.stringify(DEFAULTS));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));return true;}catch(e){try{toast('저장 공간이 가득 찼어요 😢 사진을 줄여보세요');}catch(_){}return false;}}
+let state=load();
+
+const $=id=>document.getElementById(id);
+const midnight=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime();};
+const DAY=86400000;
+const clamp=v=>Math.max(0,Math.min(100,v));
+
+function tempColor(t){
+  const s=[[0,'#9DBDE6'],[20,'#8FC9C2'],[40,'#FFC97A'],[60,'#FFA56B'],[80,'#FF7E8F'],[100,'#FF5A7A']];
+  let a=s[0],b=s[s.length-1];
+  for(let i=0;i<s.length-1;i++){if(t>=s[i][0]&&t<=s[i+1][0]){a=s[i];b=s[i+1];break;}}
+  const r=(t-a[0])/((b[0]-a[0])||1),ca=hex(a[1]),cb=hex(b[1]);
+  return 'rgb('+ca.map((c,i)=>Math.round(c+(cb[i]-c)*r)).join(',')+')';
+}
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function levelLabel(t){if(t<20)return'쌀쌀한 사이';if(t<36)return'미지근';if(t<50)return'따뜻';if(t<75)return'포근';return'뜨거운 효심 🔥';}
+
+/* ===== cute face ===== */
+function faceSVG(st){
+  const cheek=op=>`<circle cx="26" cy="60" r="9" fill="#FF7E96" opacity="${op}"/><circle cx="74" cy="60" r="9" fill="#FF7E96" opacity="${op}"/>`;
+  const I='#5A4651';
+  if(st==='cold')return `${cheek(0)}<circle cx="36" cy="46" r="4.5" fill="${I}"/><circle cx="64" cy="46" r="4.5" fill="${I}"/><path d="M42 66 Q50 60 58 66" stroke="${I}" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M70 36 q3 5 0 9" stroke="#9DBDE6" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  if(st==='mid')return `${cheek(.35)}<circle cx="36" cy="46" r="4.5" fill="${I}"/><circle cx="64" cy="46" r="4.5" fill="${I}"/><path d="M40 60 Q50 69 60 60" stroke="${I}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  if(st==='warm')return `${cheek(.8)}<path d="M30 48 Q36 41 42 48" stroke="${I}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M58 48 Q64 41 70 48" stroke="${I}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M38 58 Q50 73 62 58" stroke="${I}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  // hot - heart eyes
+  const heart=(x)=>`<path d="M${x} 44 C${x-3} 40,${x-9} 42,${x-9} 47 C${x-9} 51,${x} 56,${x} 56 C${x} 56,${x+9} 51,${x+9} 47 C${x+9} 42,${x+3} 40,${x} 44 Z" fill="#FF4D6D"/>`;
+  return `${cheek(1)}${heart(35)}${heart(65)}<path d="M38 64 Q50 78 62 64 Q50 70 38 64 Z" fill="#E8466A"/><text x="18" y="34" font-size="13">✨</text><text x="74" y="36" font-size="11">✨</text>`;
+}
+
+function computeSeries(){
+  const acts=[...state.actions].sort((x,y)=>x.ts-y.ts);
+  const today=midnight(Date.now());
+  if(!acts.length)return {temp:0,series:[{d:today,t:0}],idleDays:0};
+  const pbd={};acts.forEach(a=>{const k=midnight(a.ts);pbd[k]=(pbd[k]||0)+a.points;});
+  const start=midnight(acts[0].ts),g=state.settings.graceDays,dec=state.settings.decayPerDay;
+  const monthly=state.settings.monthlyReset!==false;
+  let temp=0,lastAct=start-DAY,series=[],prevMo=null;
+  for(let d=start;d<=today;d+=DAY){
+    const dt=new Date(d),mo=dt.getFullYear()*12+dt.getMonth();
+    if(monthly&&prevMo!==null&&mo!==prevMo){temp=0;lastAct=d;}
+    prevMo=mo;
+    if(pbd[d]){temp=clamp(temp+pbd[d]);lastAct=d;}
+    else{if((d-lastAct)/DAY>g)temp=clamp(temp-dec);}
+    series.push({d,t:Math.round(temp)});
+  }
+  const lastActionDay=midnight(acts[acts.length-1].ts);
+  return {temp:Math.round(temp),series,idleDays:(today-lastActionDay)/DAY};
+}
+function computeStreak(){
+  if(!state.actions.length)return 0;
+  const set=new Set(state.actions.map(a=>midnight(a.ts)));
+  const today=midnight(Date.now());
+  let cur=set.has(today)?today:(set.has(today-DAY)?today-DAY:null);
+  if(cur===null)return 0;let n=0;while(set.has(cur)){n++;cur-=DAY;}return n;
+}
+
+function paint(t){const c=tempColor(t);document.documentElement.style.setProperty('--temp-color',c);document.documentElement.style.setProperty('--ambient',c);}
+function render(){
+  const {temp,idleDays}=computeSeries(),streak=computeStreak();
+  paint(temp);
+  $('fill').style.height=temp+'%';
+  $('tempNum').innerHTML=temp+'<small>°C</small>';
+  $('tempLabel').textContent=levelLabel(temp);
+
+  const fs=temp<20?'cold':temp<50?'mid':temp<75?'warm':'hot';
+  $('face').innerHTML=faceSVG(fs);
+  const bulb=$('bulb');bulb.className='bulb'+(fs==='cold'?' shiver':(temp>=50?' bob':''));
+  $('ambHearts').style.opacity=temp>=50?1:0;
+
+  state.meta=state.meta||{};
+  if(temp>=50){if(!state.meta.cel50){state.meta.cel50=true;save();showCelebrate(temp);}}
+  else if(state.meta.cel50){state.meta.cel50=false;save();}
+
+  const g=state.settings.graceDays;let sub='',note='';
+  if(!state.actions.length){sub='첫 기록으로 온도를 깨워보세요 ✨';
+    note=`<div class="note"><div class="ic">🌱</div><div><h3>시작해볼까요?</h3><p>전화 한 통, 안부 한 줄도 충분해요. 작은 관심이 쌓여 온도가 됩니다.</p></div></div>`;}
+  else if(temp===0){const mr=state.settings.monthlyReset!==false;
+    sub=mr?'이번 달, 첫 기록을 남겨보세요 🗓️':'온도가 0°C예요. 다시 깨워볼까요?';
+    note=`<div class="note"><div class="ic">🗓️</div><div><h3>${mr?'새로운 한 달이 시작됐어요':'다시 시작해요'}</h3><p>${mr?'매월 1일 온도가 0°C부터 다시 시작돼요. 오늘 첫 마음을 기록해 볼까요? 💗':'오늘 첫 기록으로 다시 따뜻하게 만들어 주세요 💗'}</p></div></div>`;}
+  else if(idleDays>g){sub=`${Math.floor(idleDays)}일째 연락이 없어요 🥶`;
+    note=`<div class="note warn"><div class="ic">❄️</div><div><h3>온도가 식고 있어요</h3><p>마지막 기록 후 ${Math.floor(idleDays)}일이 지나 하루 ${state.settings.decayPerDay}°C씩 내려가는 중이에요. 짧은 안부면 금방 따뜻해져요.</p></div></div>`;}
+  else{const left=Math.max(0,g-Math.floor(idleDays));
+    sub=idleDays===0?'오늘도 마음을 전했네요 😊':`${left}일 안에 안부를 전하면 온기를 지킬 수 있어요.`;
+    note=`<div class="note"><div class="ic">💛</div><div><h3>따뜻함 유지 중</h3><p>꾸준함이 가장 큰 효심이에요. 이 온도, 함께 지켜가요.</p></div></div>`;}
+  $('tempSub').textContent=sub;$('homeNote').innerHTML=note;
+  $('pillStreak').textContent=streak;$('pillMonth').textContent=countInMonth();
+  renderRecent();
+  if($('v-history').classList.contains('active'))renderHistory();
+  if($('v-calendar').classList.contains('active')){renderCalendar();renderTs();}
+  if($('v-report').classList.contains('active')){const {series}=computeSeries();renderReport(series,streak);}
+}
+
+const escape=s=>s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+function actItem(a,del){const t=TYPES[a.type];return `<div class="item"><div class="emo">${t.emo}</div>
+  <div class="body"><div class="t">${t.label}</div><div class="m">${a.memo?escape(a.memo):new Date(a.ts).toLocaleDateString('ko-KR',{month:'long',day:'numeric'})}</div></div>
+  ${a.photo?`<img class="thumb" src="${a.photo}">`:''}<div class="pts">+${a.points}°</div>
+  ${del?`<button class="del" onclick="delAction(${a.id})">✕</button>`:''}</div>`;}
+function renderRecent(){const l=[...state.actions].sort((a,b)=>b.ts-a.ts).slice(0,4);
+  $('recentList').innerHTML=l.length?l.map(a=>actItem(a,false)).join(''):`<div class="empty"><span class="big">🫧</span>아직 기록이 없어요.<br>위 버튼으로 첫 마음을 남겨보세요.</div>`;}
+function renderHistory(){const l=[...state.actions].sort((a,b)=>b.ts-a.ts);
+  if(!l.length){$('historyList').innerHTML=`<div class="empty"><span class="big">📭</span>기록이 쌓이면<br>여기에 타임라인으로 보여드려요.</div>`;return;}
+  let h='',last='';l.forEach(a=>{const dk=new Date(a.ts).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});if(dk!==last){h+=`<div class="day-head">${dk}</div>`;last=dk;}h+=actItem(a,true);});
+  $('historyList').innerHTML=h;}
+
+const countInMonth=()=>{const n=new Date();return state.actions.filter(a=>{const d=new Date(a.ts);return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;};
+const countInWeek=()=>{const n=new Date(),day=(n.getDay()+6)%7,mon=midnight(n-day*DAY);return state.actions.filter(a=>midnight(a.ts)>=mon).length;};
+
+function renderWeek(){
+  const tmap=dayTempMap();
+  const now=new Date();const dow=(now.getDay()+6)%7;const mon=midnight(now)-dow*DAY;
+  const today=midnight(Date.now());
+  const names=['월','화','수','목','금','토','일'];
+  const days=[];let maxV=-1,maxI=-1,sum=0,cnt=0;
+  for(let i=0;i<7;i++){const ts=mon+i*DAY;const future=ts>today;const v=(!future&&tmap[ts]!==undefined)?tmap[ts]:0;days.push({ts,v,future});if(!future){sum+=v;cnt++;if(v>maxV){maxV=v;maxI=i;}}}
+  const cur=(tmap[today]!==undefined)?tmap[today]:0;
+  const R=52,C=2*Math.PI*R;
+  const PK='#10C29A',MINT='#A6E4D2';
+  const prog=$('ringProg');prog.setAttribute('stroke-dasharray',C);prog.setAttribute('stroke-dashoffset',C*(1-cur/100));prog.setAttribute('stroke',PK);
+  $('ringNum').textContent=cur+'°';$('ringNum').style.color=PK;
+  $('ringLab').textContent=levelLabel(cur);
+  const H=132;
+  $('wkBars').innerHTML=days.map((d,i)=>{
+    const h=Math.max(3,d.v/100*H);
+    const col=d.future?'#E6E9E8':(d.ts===today?PK:MINT);
+    const crown=(i===maxI&&maxV>0)?'<div class="crown">👑</div>':'';
+    const todayCls=(d.ts===today)?' today':'';
+    return `<div class="wk-col${todayCls}">${crown}<div class="bar" style="height:${h}px;background:${col}"></div><div class="lb">${names[i]}<br>${new Date(d.ts).getDate()}</div></div>`;
+  }).join('');
+  $('goal50').style.top=(H*(1-50/100))+'px';
+  $('goal36').style.top=(H*(1-36/100))+'px';
+  $('wkCount').textContent=countInWeek();
+  $('wkAvg').textContent=(cnt?Math.round(sum/cnt):0)+'°';
+}
+function monthlySummary(){
+  const {series}=computeSeries();
+  const peak={};series.forEach(p=>{const d=new Date(p.d);const k=d.getFullYear()+'-'+d.getMonth();peak[k]=Math.max(peak[k]||0,p.t);});
+  const cnt={};state.actions.forEach(a=>{const d=new Date(a.ts);const k=d.getFullYear()+'-'+d.getMonth();cnt[k]=(cnt[k]||0)+1;});
+  return Object.keys(cnt).sort().reverse().map(k=>{const [y,m]=k.split('-').map(Number);return {y,m,peak:peak[k]||0,count:cnt[k],key:k};});
+}
+function renderMonthly(){
+  const rows=monthlySummary();
+  if(!rows.length){$('monthlyList').innerHTML='<div style="color:var(--ink-soft);font-size:13px;text-align:center;padding:14px">기록이 쌓이면 달마다 요약이 남아요</div>';return;}
+  const now=new Date();const nowKey=now.getFullYear()+'-'+now.getMonth();
+  $('monthlyList').innerHTML=rows.map(r=>`<div class="mo-row"><div class="mo-name">${r.y}년 ${r.m+1}월${r.key===nowKey?'<span class="now">이번 달</span>':''}</div><div class="mo-stat"><span class="mo-peak" style="color:${tempColor(r.peak)}">최고 ${r.peak}°</span> · ${r.count}회</div></div>`).join('');
+}
+function renderReport(series,streak){
+  renderWeek();renderMonthly();
+  $('stWeek').innerHTML=countInWeek()+'<small>회</small>';
+  $('stMonth').innerHTML=countInMonth()+'<small>회</small>';
+  $('stStreak').innerHTML=streak+'<small>일</small>';
+  const cnt={};state.actions.forEach(a=>cnt[a.type]=(cnt[a.type]||0)+1);
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  $('stTop').innerHTML=top?`${TYPES[top[0]].emo} ${TYPES[top[0]].label}`:'–';
+  drawTrend(series.slice(-30));
+  const max=Math.max(1,...Object.values(cnt));
+  $('bars').innerHTML=Object.keys(TYPES).map(k=>{const c=cnt[k]||0;return `<div class="bar-row"><div class="lab">${TYPES[k].emo} ${TYPES[k].label}</div><div class="track"><div class="grow" style="width:${c/max*100}%"></div></div><div class="cnt">${c}</div></div>`;}).join('');
+}
+function drawTrend(pts){
+  const svg=$('trend'),W=320,H=130,pad=6;
+  if(pts.length<2){svg.innerHTML=`<text x="160" y="68" text-anchor="middle" fill="#C9B3BA" font-size="12" font-family="Gowun Dodum">데이터가 더 쌓이면 추이가 보여요</text>`;return;}
+  const n=pts.length,x=i=>pad+i/(n-1)*(W-2*pad),y=t=>H-pad-(t/100)*(H-2*pad);
+  let d='';pts.forEach((p,i)=>d+=(i?'L':'M')+x(i).toFixed(1)+' '+y(p.t).toFixed(1)+' ');
+  const area=`M${x(0).toFixed(1)} ${H-pad} `+pts.map((p,i)=>'L'+x(i).toFixed(1)+' '+y(p.t).toFixed(1)).join(' ')+` L${x(n-1).toFixed(1)} ${H-pad} Z`;
+  const last=pts[pts.length-1].t,col=tempColor(last);
+  svg.innerHTML=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".35"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <line x1="${pad}" y1="${y(50)}" x2="${W-pad}" y2="${y(50)}" stroke="#F3E4E0" stroke-dasharray="3 4"/>
+    <path d="${area}" fill="url(#g)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${x(n-1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="4.5" fill="${col}"/>`;
+}
+
+function go(v,btn){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+  $('v-'+v).classList.add('active');
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(v==='history')renderHistory();
+  if(v==='calendar'){renderCalendar();renderTs();}
+  if(v==='report'){const {series}=computeSeries();renderReport(series,computeStreak());}
+  if(v==='settings')renderSettings();
+}
+
+let picked=null,pickedPhoto=null;
+function buildChips(){$('chips').innerHTML=Object.keys(TYPES).map(k=>`<div class="chip" onclick="pick('${k}',this)"><span class="e">${TYPES[k].emo}</span>${TYPES[k].label}<span class="p">+${state.settings.weights[k]}°</span></div>`).join('');}
+function pick(k,el){picked=k;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');$('saveBtn').disabled=false;}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function openSheet(){picked=null;pickedPhoto=null;$('memo').value='';$('saveBtn').disabled=true;$('photoPreview').style.display='none';$('photo').value='';const ts=todayStr();$('recDate').max=ts;$('recDate').value=ts;buildChips();$('scrim').classList.add('open');$('sheet').classList.add('open');}
+function closeSheet(){$('scrim').classList.remove('open');$('sheet').classList.remove('open');}
+function onPhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const cv=document.createElement('canvas'),s=Math.min(1,420/Math.max(img.width,img.height));cv.width=img.width*s;cv.height=img.height*s;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);pickedPhoto=cv.toDataURL('image/jpeg',.7);$('photoPreview').src=pickedPhoto;$('photoPreview').style.display='block';};img.src=r.result;};r.readAsDataURL(f);}
+function saveAction(){if(!picked)return;const p=state.settings.weights[picked];
+  let ts=Date.now();const sel=$('recDate').value;
+  if(sel){const [y,m,d]=sel.split('-').map(Number);const base=new Date(y,m-1,d);const now=new Date();base.setHours(now.getHours(),now.getMinutes(),now.getSeconds(),0);ts=Math.min(base.getTime(),Date.now());}
+  state.actions.push({id:Date.now(),type:picked,points:p,memo:$('memo').value.trim(),photo:pickedPhoto,ts});save();closeSheet();render();popHearts();toast(`온도 +${p}°C 올랐어요 💕`);}
+function delAction(id){state.actions=state.actions.filter(a=>a.id!==id);save();render();renderHistory();}
+
+function renderSettings(){
+  $('weightSettings').innerHTML='<div style="font-size:13px;color:var(--ink-soft);padding:13px 0 4px;">행동별 온도 점수</div>'+Object.keys(TYPES).map(k=>`<div class="set-row"><div class="lab">${TYPES[k].emo} ${TYPES[k].label}</div><div><input type="number" id="w-${k}" min="0" max="50" value="${state.settings.weights[k]}"><span class="unit">°C</span></div></div>`).join('');
+  $('setGrace').value=state.settings.graceDays;$('setDecay').value=state.settings.decayPerDay;
+  $('swMonthly').classList.toggle('on',state.settings.monthlyReset!==false);}
+function toggleMonthly(){state.settings.monthlyReset=!(state.settings.monthlyReset!==false);save();$('swMonthly').classList.toggle('on',state.settings.monthlyReset);render();}
+function saveSettings(){Object.keys(TYPES).forEach(k=>{const v=parseInt($('w-'+k).value);if(!isNaN(v))state.settings.weights[k]=Math.max(0,v);});const g=parseInt($('setGrace').value),d=parseInt($('setDecay').value);if(!isNaN(g))state.settings.graceDays=Math.max(0,g);if(!isNaN(d))state.settings.decayPerDay=Math.max(0,d);save();render();toast('설정을 저장했어요 ✓');}
+function resetAll(){if(confirm('모든 기록과 설정을 지울까요? 되돌릴 수 없어요.')){state=JSON.parse(JSON.stringify(DEFAULTS));save();renderSettings();render();toast('초기화되었어요');}}
+
+/* ===== calendar + time series ===== */
+let calRef=(()=>{const d=new Date();d.setDate(1);d.setHours(0,0,0,0);return d;})();
+let calSel=midnight(Date.now());
+let tsMode='week';
+
+function dayTempMap(){const {series}=computeSeries();const m={};series.forEach(p=>m[p.d]=p.t);return m;}
+function dayActsMap(){const m={};state.actions.forEach(a=>{const k=midnight(a.ts);(m[k]=m[k]||[]).push(a);});return m;}
+
+function renderCalendar(){
+  const y=calRef.getFullYear(),mo=calRef.getMonth();
+  $('calTitle').textContent=`${y}년 ${mo+1}월`;
+  const startDow=new Date(y,mo,1).getDay(),days=new Date(y,mo+1,0).getDate();
+  const tmap=dayTempMap(),amap=dayActsMap(),today=midnight(Date.now());
+  let h='';
+  for(let i=0;i<startDow;i++)h+='<div class="cell empty"></div>';
+  for(let d=1;d<=days;d++){
+    const ts=midnight(new Date(y,mo,d));
+    const hasT=tmap[ts]!==undefined,t=tmap[ts],acts=amap[ts];
+    const bg=hasT?`background:color-mix(in srgb, ${tempColor(t)} 45%, #fff)`:'';
+    const cls='cell'+(ts===today?' today':'')+(ts===calSel?' sel':'');
+    h+=`<div class="${cls}" style="${bg}" onclick="selDay(${ts})"><span class="num">${d}</span>${acts?'<span class="mk">💗</span>':''}</div>`;
+  }
+  $('calGrid').innerHTML=h;
+  renderCalDetail();
+}
+function selDay(ts){calSel=ts;renderCalendar();}
+function renderCalDetail(){
+  const amap=dayActsMap(),tmap=dayTempMap();
+  const acts=(amap[calSel]||[]).sort((a,b)=>b.ts-a.ts);
+  const dateStr=new Date(calSel).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  const t=tmap[calSel];
+  let inner=`<div class="cal-card"><div style="display:flex;justify-content:space-between;align-items:center;${acts.length?'margin-bottom:12px':''}"><b style="font-family:Jua;font-weight:400;font-size:15px">${dateStr}</b>${t!==undefined?`<span class="badge" style="background:${tempColor(t)};font-size:13px;padding:5px 13px;margin:0">${t}°C</span>`:''}</div>`;
+  inner+=acts.length?acts.map(a=>actItem(a,false)).join(''):`<div style="color:var(--ink-soft);font-size:13px;text-align:center;padding:8px">이 날의 기록이 없어요</div>`;
+  inner+='</div>';
+  $('calDetail').innerHTML=inner;
+}
+function calMove(dir){calRef.setMonth(calRef.getMonth()+dir);renderCalendar();}
+
+function weekStartTs(ts){const d=new Date(ts);d.setHours(0,0,0,0);const D=(d.getDay()+6)%7;d.setDate(d.getDate()-D);return d.getTime();}
+function aggTimeline(mode){
+  if(!state.actions.length)return [];
+  const tmap=dayTempMap(),today=midnight(Date.now());
+  const startTs=midnight(Math.min(...state.actions.map(a=>a.ts)));
+  if(mode==='week'){
+    const out=[];let cur=weekStartTs(startTs);const end=weekStartTs(today);
+    while(cur<=end){out.push(cur);cur+=7*DAY;}
+    return out.slice(-12).map(ws=>{
+      let sum=0,cnt=0;
+      for(let i=0;i<7;i++){const d=ws+i*DAY;if(d>today)break;sum+=(tmap[d]!==undefined?tmap[d]:0);cnt++;}
+      return {label:new Date(ws).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}),value:cnt?Math.round(sum/cnt):0};
+    });
+  }
+  const sd=new Date(startTs),ed=new Date(today);const months=[];let y=sd.getFullYear(),m=sd.getMonth();
+  while(y<ed.getFullYear()||(y===ed.getFullYear()&&m<=ed.getMonth())){months.push([y,m]);if(++m>11){m=0;y++;}}
+  return months.slice(-12).map(([yy,mm])=>{
+    const days=new Date(yy,mm+1,0).getDate();let sum=0,cnt=0;
+    for(let d=1;d<=days;d++){const ts=midnight(new Date(yy,mm,d));if(ts>today)break;sum+=(tmap[ts]!==undefined?tmap[ts]:0);cnt++;}
+    return {label:(mm+1)+'월',value:cnt?Math.round(sum/cnt):0};
+  });
+}
+function renderTs(){
+  const data=aggTimeline(tsMode),wrap=$('periodBars');
+  if(!data.length){wrap.innerHTML='<div style="margin:auto;color:var(--ink-soft);font-size:13px;text-align:center;width:100%">기록이 쌓이면<br>시계열이 보여요</div>';return;}
+  wrap.innerHTML=data.map(p=>{
+    const hgt=Math.max(4,p.value/100*120);
+    return `<div class="pb"><span class="val">${p.value}°</span><div class="b" style="height:${hgt}px;background:${tempColor(p.value)}"></div><span class="lb">${p.label}</span></div>`;
+  }).join('');
+}
+function setTs(mode,btn){tsMode=mode;document.querySelectorAll('#tsSeg button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderTs();}
+
+function showCelebrate(t){$('celTemp').textContent=t+'°C';$('celTemp2').textContent=t+'°C';$('celScrim').classList.add('open');$('celCard').classList.add('open');popHearts();setTimeout(popHearts,450);}
+function closeCel(){$('celScrim').classList.remove('open');$('celCard').classList.remove('open');}
+
+let toastT;
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+function popHearts(){const ar=['💗','💛','🧡','✨','💕'];for(let i=0;i<7;i++){const s=document.createElement('div');s.className='burst';s.textContent=ar[i%ar.length];s.style.left=(window.innerWidth/2-20+(Math.random()*120-60))+'px';s.style.top=(window.innerHeight*0.35)+'px';s.style.setProperty('--r',(Math.random()*60-30)+'deg');s.style.animationDelay=(i*0.06)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1400);}}
+function poke(){const b=$('bulb');b.style.transition='transform .15s';b.style.transform='translateX(-50%) scale(1.08)';setTimeout(()=>{b.style.transform='';b.style.transition='';},160);popHearts();}
+
+render();
+</script>
+</body>
+</html>
